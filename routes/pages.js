@@ -237,6 +237,7 @@ router.post('/orders/:userid/:itemid', authController.isLoggedIn, (req, res) => 
     pool.query('SELECT * FROM storage WHERE id=?', [req.params.itemid], (err, rows) => {
       //when done with connection, release it 
       let storage = rows[0]
+      
       if (((parseInt(storage.quantity) - parseInt(req.body.amount)) >= 0) && (req.body.amount > 0) && (req.body.amount % 1 == 0)) {
         pool.query('INSERT INTO orders SET userid = ?, itemid = ?, amount = ?,order_date = CURRENT_TIMESTAMP', [req.params.userid, req.params.itemid, req.body.amount], (err, cart) => {
           let newval = parseInt(storage.quantity) - parseInt(req.body.amount)
@@ -401,6 +402,59 @@ router.post('/contact', authController.isLoggedIn, (req, res) => {
         })
     }
 })
+})
+
+router.get('/contactinfo', authController.isLoggedIn, (req, res) => {
+  // const curuser = req.user
+  // res.render('contactinfo',{curuser})
+
+  if (typeof req.user === 'undefined') {
+    res.render('login', { message: 'Please login as an admin' })
+    // console.log(typeof user)
+  } else {
+    let curuser = req.user;
+    // console.log(curuser)
+
+    if (req.user.type == 'admin') {
+
+      // res.render('orders',{curuser})
+
+      pool.getConnection((err, connection) => {
+        if (err) throw err;
+        connection.query('SELECT * FROM contact_info', (err, rows) => {
+          res.render('contactinfo', { rows, curuser })
+          // console.log(rows)
+
+        })
+      })
+
+    } else {
+      res.render('login', { message: 'Please login as an admin' })
+    }
+  }
+})
+
+router.get('/contactinfo/:id', authController.isLoggedIn, (req, res) => {
+
+  pool.getConnection((err, connection) => {
+    if (err) throw err;
+    // console.log('connected as ID '+connection.threadId);
+    //Use the connection
+    // console.log(req.params.id)
+    connection.query('DELETE FROM contact_info WHERE id = ?', [req.params.id], (err, rows) => {
+      //when done with connection, release it
+      connection.release();
+
+      if (!err) {
+        res.redirec('/')
+
+      }
+      else console.log(err)
+
+      // console.log('The data from storage table: \n',rows)
+
+    })
+  })
 })
 
 module.exports = router;
