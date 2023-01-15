@@ -30,15 +30,15 @@ exports.view = (req, res) => {
                 if (err) throw err;
                 // console.log('connected as ID '+connection.threadId);
                 //Use the connection
-                connection.query('SELECT * FROM storage', (err, rows) => {
-                    //when done with connection, release it
-                    connection.release();
+                connection.query('SELECT * FROM storage st,supplier su  WHERE st.supplier_id = su.supplier_id', (err, rows) => {
 
                     if (!err) {
                         let removedUser = req.query.removed;
                         res.render('storage', { rows, removedUser, curuser })
                     }
                     else console.log(err)
+
+                    connection.release();
 
                     // console.log('The data from storage table: \n',rows)
 
@@ -90,45 +90,50 @@ exports.form = (req, res) => {
 exports.create = (req, res) => {
 
     // res.render('add-item');
-    let { iname, quantity, description,image } = req.body
+    let { iname, quantity, description, image, supplier_id } = req.body
 
-    if(!image)
-        image = 'https://media.istockphoto.com/id/931643150/vector/picture-icon.jpg?s=170667a&w=0&k=20&c=3Jh8trvArKiGdBCGPfe6Y0sUMsfh2PrKA0uHOK4_0IM='	
+    if (!image)
+        image = 'https://media.istockphoto.com/id/931643150/vector/picture-icon.jpg?s=170667a&w=0&k=20&c=3Jh8trvArKiGdBCGPfe6Y0sUMsfh2PrKA0uHOK4_0IM='
+    if (supplier_id && iname && quantity) {
+        pool.getConnection((err, connection) => {
+            if (err) throw err;
+            // console.log('connected as ID '+connection.threadId);
 
-    pool.getConnection((err, connection) => {
-        if (err) throw err;
-        // console.log('connected as ID '+connection.threadId);
+            let saerchTerm = req.body.search;
 
-        let saerchTerm = req.body.search;
+            //Use the connection
+            connection.query('INSERT INTO storage SET iname = ?, quantity = ?, added = CURRENT_TIMESTAMP,UPDATED = CURRENT_TIMESTAMP,description = ?,image=?, supplier_id = ?', [iname, quantity, description, image, supplier_id], (err, rows) => {
+                //when done with connection, release it
+                connection.release();
+                let curuser = req.user
 
-        //Use the connection
-        connection.query('INSERT INTO storage SET iname = ?, quantity = ?, added = CURRENT_TIMESTAMP,UPDATED = CURRENT_TIMESTAMP,description = ?,image=?', [iname, quantity, description,image], (err, rows) => {
-            //when done with connection, release it
-            connection.release();
-            let curuser = req.user
+                if (!err)
+                    res.render('add-item', { message: 'Item added Successfully.', curuser })
+                else{
+                    // console.log(err)
+                    res.render('add-item', { alert: 'Entered Information Is Invalid.', curuser })
+                }
 
-            if (!err)
-                res.render('add-item', { alert: 'Item added Successfully.',curuser })
-            else
-                console.log(err)
-
-            // console.log('The data from storage table: \n',rows)
-
+            })
         })
-    })
+    }
+    else {
+        let curuser = req.user
+        res.render('add-item', { alert: 'Please Enter the Details Correctly.', curuser })
+    }
 }
 
 //update item
 exports.update = (req, res) => {
-    const { iname, quantity, description, image } = req.body;
+    const { iname, quantity, description, image,supplier_id } = req.body;
 
-    
+
 
     pool.getConnection((err, connection) => {
         if (err) throw err;
         // console.log('connected as ID '+connection.threadId);
         //Use the connection
-        connection.query('UPDATE storage SET iname = ?, quantity = ?,updated = CURRENT_TIMESTAMP,description = ?, image = ? WHERE id = ?', [iname, quantity, description,image, req.params.id], (err, rows) => {
+        connection.query('UPDATE storage SET iname = ?, quantity = ?,updated = CURRENT_TIMESTAMP,description = ?, image = ?,supplier_id = ? WHERE id = ?', [iname, quantity, description, image,supplier_id, req.params.id], (err, rows) => {
             //when done with connection, release it
             connection.release();
 
@@ -213,7 +218,7 @@ exports.viewdetail = (req, res) => {
         if (err) throw err;
         // console.log('connected as ID '+connection.threadId);
         //Use the connection
-        connection.query('SELECT * FROM storage WHERE id = ?', [req.params.id], (err, rows) => {
+        connection.query('SELECT * FROM storage st, supplier su WHERE id = ? AND  st.supplier_id = su.supplier_id', [req.params.id], (err, rows) => {
             //when done with connection, release it
             connection.release();
 

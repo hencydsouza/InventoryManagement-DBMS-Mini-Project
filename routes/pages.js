@@ -111,7 +111,7 @@ router.get('/users/delete/:id', authController.isLoggedIn, (req, res) => {
     if (err) throw err;
     // console.log('connected as ID '+connection.threadId);
     //Use the connection
-    console.log(req.params.id)
+    // console.log(req.params.id)
     connection.query('DELETE FROM users WHERE id = ?', [req.params.id], (err, rows) => {
       //when done with connection, release it
       connection.release();
@@ -167,37 +167,9 @@ router.post('/users/update/:id', (req, res) => {
   })
 })
 
-// router.get('/cart', authController.isLoggedIn, (req, res) => {
-
-//   if (typeof req.user === 'undefined') {
-//     res.render('login', { message: 'Please login as an admin' })
-//     // console.log(typeof user)
-//   } else {
-
-//     let curuser = req.user;
-//     // console.log(curuser)
-
-//     if (req.user.type == 'admin') {
-
-//       res.render('cart');
-
-//     } else
-//       res.render('login', { message: 'Please login as admin to access this page.' });
-//   }
-// })
-
-// router.post('/orders/:userid/:itemid', authController.isLoggedIn, (req, res) => {
-
-//   pool.query('INSERT INTO orders SET userid = ?, itemid = ?, amount = ?', [req.params.userid, req.params.itemid, req.body.amount], (err, rows) => {
-
-//     res.redirect('/')
-
-//   })
-
-// })
 
 router.get('/orders', authController.isLoggedIn, (req, res) => {
-  console.log(req.user)
+  // console.log(req.user)
 
   if (typeof req.user === 'undefined') {
     res.render('login', { message: 'Please login as an admin' })
@@ -237,7 +209,7 @@ router.post('/orders/:userid/:itemid', authController.isLoggedIn, (req, res) => 
     pool.query('SELECT * FROM storage WHERE id=?', [req.params.itemid], (err, rows) => {
       //when done with connection, release it 
       let storage = rows[0]
-      
+
       if (((parseInt(storage.quantity) - parseInt(req.body.amount)) >= 0) && (req.body.amount > 0) && (req.body.amount % 1 == 0)) {
         pool.query('INSERT INTO orders SET userid = ?, itemid = ?, amount = ?,order_date = CURRENT_TIMESTAMP', [req.params.userid, req.params.itemid, req.body.amount], (err, cart) => {
           let newval = parseInt(storage.quantity) - parseInt(req.body.amount)
@@ -387,21 +359,21 @@ router.post('/', authController.isLoggedIn, (req, res) => {
 
 router.get('/contact', authController.isLoggedIn, (req, res) => {
   let curuser = req.user;
-  res.render('contact',{curuser})
+  res.render('contact', { curuser })
 })
 
 router.post('/contact', authController.isLoggedIn, (req, res) => {
-  const {name,email,comment} = req.body
+  const { name, email, comment } = req.body
 
   pool.query('INSERT INTO contact_info SET ? ', { name: name, email: email, comment: comment }, (err, results) => {
     if (err) console.log(err);
     else {
-        // console.log(results)
-        return res.render('contact', {
-            success: 'Form Submitted Successfully.'
-        })
+      // console.log(results)
+      return res.render('contact', {
+        success: 'Form Submitted Successfully.'
+      })
     }
-})
+  })
 })
 
 router.get('/contactinfo', authController.isLoggedIn, (req, res) => {
@@ -446,7 +418,7 @@ router.get('/contactinfo/:id', authController.isLoggedIn, (req, res) => {
       connection.release();
 
       if (!err) {
-        res.redirec('/')
+        res.redirect('/orderhistory')
 
       }
       else console.log(err)
@@ -454,6 +426,69 @@ router.get('/contactinfo/:id', authController.isLoggedIn, (req, res) => {
       // console.log('The data from storage table: \n',rows)
 
     })
+  })
+})
+
+router.get('/supplier', authController.isLoggedIn, (req, res) => {
+  // const curuser = req.user
+  // res.render('supplier', { curuser })
+
+  if (typeof req.user === 'undefined') {
+    res.render('login', { message: 'Please login as an admin' })
+    // console.log(typeof user)
+  } else {
+    let curuser = req.user;
+    // console.log(curuser)
+
+    if (req.user.type == 'admin') {
+
+      // res.render('orders',{curuser})
+
+      pool.getConnection((err, connection) => {
+        if (err) throw err;
+        connection.query('SELECT * FROM supplier', (err, rows) => {
+          res.render('supplier', { rows, curuser })
+          // console.log(rows)
+
+        })
+      })
+
+    } else {
+      res.render('login', { message: 'Please login as an admin' })
+    }
+  }
+})
+
+router.get('/supplier/:id', authController.isLoggedIn, (req, res) => {
+  pool.getConnection((err, connection) => {
+    if (err) throw err;
+    // console.log('connected as ID '+connection.threadId);
+    //Use the connection
+    // console.log(req.params.id)
+    connection.query('DELETE FROM supplier WHERE supplier_id = ?', [req.params.id], (err, rows) => {
+      //when done with connection, release it
+      connection.release();
+
+      if (!err) {
+        res.redirect('/supplier')
+      }
+      else console.log(err)
+
+      // console.log('The data from storage table: \n',rows)
+
+    })
+  })
+})
+
+router.post('/supplier', authController.isLoggedIn, (req, res) => {
+  const { name } = req.body
+
+  pool.query('INSERT INTO supplier SET ? ', { supplier_name: name}, (err, results) => {
+    if (err) console.log(err);
+    else {
+      // console.log(results)
+      return res.redirect('/supplier')
+    }
   })
 })
 

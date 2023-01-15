@@ -45,8 +45,9 @@
     <h1>Items</h1>
   </div>
   <div class="col-6 d-flex justify-content-end p-0">
-    <a href="/storage/additem" class="btn btn-primary align-self-center">+ add
+    <a href="/storage/additem" class="btn btn-primary align-self-center"><i class="bi bi-plus-circle"></i> add
       item</a>
+    <a href="/supplier" class="btn btn-primary align-self-center" style="margin-left: 10px"><i class="bi bi-box2"></i> Suppliers</a>
   </div>
 </div>
 
@@ -60,6 +61,7 @@
         <th scope="col">Quantity</th>
         <th scope="col">Added On</th>
         <th scope="col">Last Updated On</th>
+        <th scope="col">Supplier</th>
         <th scope="col" class="text-end">Action</th>
       </tr>
     </thead>
@@ -74,6 +76,7 @@
         <td>{{this.quantity}}</td>
         <td style="width: 17vw;">{{this.added}}</td>
         <td style="width: 17vw;">{{this.updated}}</td>
+        <td>{{this.supplier_name}}</td>
         <td class="text-end">
 
           <a href="/storage/viewitem/{{this.id}}" type="button" class="btn btn-light btn-small"> <i
