@@ -364,16 +364,21 @@ router.get('/contact', authController.isLoggedIn, (req, res) => {
 
 router.post('/contact', authController.isLoggedIn, (req, res) => {
   const { name, email, comment } = req.body
-
-  pool.query('INSERT INTO contact_info SET ? ', { name: name, email: email, comment: comment }, (err, results) => {
-    if (err) console.log(err);
-    else {
-      // console.log(results)
-      return res.render('contact', {
-        success: 'Form Submitted Successfully.'
-      })
-    }
-  })
+  if (name && email && comment) {
+    pool.query('INSERT INTO contact_info SET ? ', { name: name, email: email, comment: comment }, (err, results) => {
+      if (err) console.log(err);
+      else {
+        // console.log(results)
+        return res.render('contact', {
+          success: 'Form Submitted Successfully.'
+        })
+      }
+    })
+  } else{
+    return res.render('contact', {
+      message: 'Please Fill All the Fields.'
+    })
+  }
 })
 
 router.get('/contactinfo', authController.isLoggedIn, (req, res) => {
@@ -482,13 +487,24 @@ router.get('/supplier/:id', authController.isLoggedIn, (req, res) => {
 
 router.post('/supplier', authController.isLoggedIn, (req, res) => {
   const { name } = req.body
-
-  pool.query('INSERT INTO supplier SET ? ', { supplier_name: name}, (err, results) => {
-    if (err) console.log(err);
-    else {
-      // console.log(results)
-      return res.redirect('/supplier')
-    }
+  flag = true
+  pool.getConnection((err, connection) => {
+    if (err) throw err;
+    connection.query('SELECT * FROM supplier', (err, rows) => {
+      rows.forEach(rows => {
+        if (rows.supplier_name == name)
+          flag = false;
+      });
+      if (flag) {
+        pool.query('INSERT INTO supplier SET ? ', { supplier_name: name }, (err, results) => {
+          if (err) console.log(err);
+          else {
+            return res.redirect('/supplier')
+          }
+        })
+      } else
+        return res.redirect('/supplier')
+    })
   })
 })
 
