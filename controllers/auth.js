@@ -14,13 +14,11 @@ const pool = mysql.createPool({
 exports.login = async (req, res) => {
     try {
         const { name, password } = req.body;
-
         if (!name || !password) {
             return res.status(400).render('login', {
                 message: 'Please provide Email and Password'
             })
         }
-
         pool.query('SELECT * FROM users WHERE name = ?', [name], async (err, results) => {
             // console.log(results);
             if (!results || !(password == results[0].password)) {
@@ -33,9 +31,6 @@ exports.login = async (req, res) => {
                 const token = jwt.sign({ id }, process.env.JWT_SECRET, {
                     expiresIn: process.env.JWT_EXPIRES_IN
                 });
-
-                // console.log("The token is: "+token);
-
                 const cookieOptions = {
                     expires: new Date(
                         Date.now() + process.env.JWT_COOKIE_EXPIRES * 24 * 60 * 60 * 1000
@@ -45,47 +40,41 @@ exports.login = async (req, res) => {
                 res.cookie('jwt', token, cookieOptions);
                 res.status(200).redirect('/');
             }
-
         })
-
     } catch (err) {
         console.log(err);
     }
 }
 
 exports.register = (req, res) => {
-    // console.log(req.body);
-
     const { name, email, password, passwordConfirm } = req.body;
-
-    pool.query('SELECT email FROM users WHERE email = ?', [email], async (err, results) => {
-        if (err) console.log(err);
-
-        if (results.length > 0) {
-            return res.render('register', {
-                message: 'Email already in use'
-            })
-        } else if (password !== passwordConfirm) {
-            return res.render('register', {
-                message: 'Password does not match'
-            })
-        }
-
-        // let hashedPassword = await bcrypt.hash(password,8);
-        // console.log(hashedPassword);
-
-        pool.query('INSERT INTO users SET ? ', { name: name, email: email, password: password }, (err, results) => {
+    if (name && email && password && passwordConfirm) {
+        pool.query('SELECT email FROM users WHERE email = ?', [email], async (err, results) => {
             if (err) console.log(err);
-            else {
-                // console.log(results)
+            if (results.length > 0) {
                 return res.render('register', {
-                    success: 'User registered'
+                    message: 'Email already in use'
+                })
+            } else if (password !== passwordConfirm) {
+                return res.render('register', {
+                    message: 'Password does not match'
                 })
             }
+            pool.query('INSERT INTO users SET ? ', { name: name, email: email, password: password }, (err, results) => {
+                if (err) console.log(err);
+                else {
+                    return res.render('register', {
+                        success: 'User registered'
+                    })
+                }
+            })
+        });
+    }
+    else {
+        return res.render('register', {
+            message: 'Please Enter Proper Details.'
         })
-
-    });
-
+    }
 }
 
 exports.isLoggedIn = async (req, res, next) => {
