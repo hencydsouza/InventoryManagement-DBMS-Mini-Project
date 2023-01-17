@@ -218,7 +218,7 @@ router.post('/orders/:userid/:itemid', authController.isLoggedIn, (req, res) => 
             if (err) throw err;
             // console.log('connected as ID '+connection.threadId);
             //Use the connection
-            connection.query('UPDATE storage SET quantity = ? WHERE id = ?', [newval, req.params.itemid], (err, rows) => {
+            connection.query('UPDATE storage SET quantity = ?, updated = CURRENT_TIMESTAMP WHERE id = ?', [newval, req.params.itemid], (err, rows) => {
               //when done with connection, release it
               connection.release();
 
