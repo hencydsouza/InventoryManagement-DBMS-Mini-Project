@@ -11,7 +11,9 @@
 
                 {{#if user}}
                 <li class="nav-item">
+                    {{#if (isEqual type "normal")}}
                     <a class="nav-link nv-hov" href="/orderhistory/{{user.id}}"> <i class="bi bi-cart"></i> Orders</a>
+                    {{/if}}
                 </li>
                 {{/if}}
 
